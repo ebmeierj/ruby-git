@@ -159,6 +159,25 @@ module Git
       @working_directory = Git::WorkingDirectory.new(work_dir.to_s, check)
     end
     
+    # returns a Git::Submodules object of all the Git::Submodule objects for this repo
+    def submodules
+      Git::Submodules.new(self)
+    end
+
+    # returns a Git::Submodule object for a specific submodule path
+    def submodule(path)
+      Git::Submodule.new(path)
+    end
+
+    # Add a submodule to a repository.
+    # To specify a path use option:
+    #
+    #   :path => 'path/to/submodule'
+    #
+    def add_submodule(url, opts = {})
+      self.lib.submodule_add(url, opts)
+    end
+
     # returns +true+ if the branch exists locally
     def is_local_branch?(branch)
       branch_names = self.branches.local.map {|b| b.name}

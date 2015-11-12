@@ -301,7 +301,7 @@ module Git
       arr = []
       command_lines('branch', '-a').each do |b| 
         current = (b[0, 2] == '* ')
-        arr << [b.gsub('* ', '').strip, current]
+        arr << [b.gsub('* ', '').gsub('remotes/', '').strip, current]
       end
       arr
     end
@@ -834,6 +834,39 @@ module Git
       (self.current_command_version <=>  self.required_command_version) >= 0
     end
 
+    def submodule_status(path = nil, opts = {})
+      arr_opts = []
+      arr_opts << '--quiet' if opts[:quiet]
+      arr_opts << '--cached' if opts[:cached]
+      arr_opts << path if path
+      submodule_command('status', arr_opts)
+    end
+
+    def submodule_add(repository, opts = {})
+      arr_opts = []
+      arr_opts << '--quiet' if opts[:quiet]
+      arr_opts << "-b #{opts[:branch]}" if opts[:branch]
+      arr_opts << '--'
+      arr_opts << repository
+      arr_opts << opts[:path] if opts[:path]
+      submodule_command('add', arr_opts)
+    end
+
+    def submodule_init(path, opts = {})
+      arr_opts = []
+      arr_opts << '--quiet' if opts[:quiet]
+      arr_opts << '--'
+      arr_opts << path
+      submodule_command('init', arr_opts)
+    end
+
+    def submodule_update(path, opts = {})
+      arr_opts = []
+      arr_opts << '--quiet' if opts[:quiet]
+      arr_opts << '--'
+      arr_opts << path
+      submodule_command('update', arr_opts)
+    end
 
     private
 
@@ -885,9 +918,11 @@ module Git
     
     def command(cmd, opts = [], chdir = true, redirect = '', &block)
       global_opts = []
+      is_submodule_add_or_update = (cmd == 'submodule' && (opts.first == 'update' || opts.first == 'add'))
+
       global_opts << "--git-dir=#{@git_dir}" if !@git_dir.nil?
-      global_opts << "--work-tree=#{@git_work_dir}" if !@git_work_dir.nil?
-      
+      global_opts << "--work-tree=#{@git_work_dir}" if !@git_work_dir.nil? && !is_submodule_add_or_update
+
       opts = [opts].flatten.map {|s| escape(s) }.join(' ')
       
       global_opts = global_opts.flatten.map {|s| escape(s) }.join(' ')
@@ -973,6 +1008,10 @@ module Git
       arr_opts
     end
     
+    def submodule_command(cmd, opts)
+      command('submodule', [cmd].concat(opts))
+    end
+
     def run_command(git_cmd, &block)
       return IO.popen(git_cmd, &block) if block_given?
       

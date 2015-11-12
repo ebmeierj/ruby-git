@@ -19,6 +19,8 @@ require 'git/repository'
 require 'git/status'
 require 'git/stash'
 require 'git/stashes'
+require 'git/submodules'
+require 'git/submodule'
 require 'git/working_directory'
 
 lib = Git::Lib.new(nil, nil)
